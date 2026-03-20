@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+
+# Engram persistent memory (local DB is gitignored; manifest + chunks are committed for git sync)
+.engram/engram.db
+
+# Agent Teams local configuration
+.agent-teams/
+
+*-workspace

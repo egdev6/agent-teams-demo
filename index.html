@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Teams — Demo</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+  <link rel="stylesheet" href="assets/theme.css" />
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- Portada -->
+<section>
+  <div style="width:100%;display:flex;justify-content:center;">
+    <img src="assets/icon.svg" class="cover-logo" alt="Agent Teams logo" style="width:72px;height:72px;" />
+  </div>
+  <h1>Agent Teams</h1>
+  <h3>Agentes que trabajan juntos</h3>
+  <p style="font-size:0.45em; color:var(--at-dim); margin-top:1.5em;">Marzo 2026</p>
+  <aside class="notes">
+    Bienvenidos. Hoy vamos a ver Agent Teams en acción. No voy a leer código — voy a ejecutar prompts
+    y que los agentes hagan el trabajo. Vamos paso a paso.
+  </aside>
+</section>
+
+<!-- Tour de la aplicación -->
+<section>
+  <h2>La extensión en acción</h2>
+  <ul class="step-list" style="font-size:0.62em; max-width:83%; margin:0.6em auto;">
+    <li><span class="step-num">→</span>Dashboard — stats, equipo activo, estado de Engram</li>
+    <li><span class="step-num">→</span>Configuración de Engram — ruta, modo, reset en un clic</li>
+    <li><span class="step-num">→</span>Sync — qué ficheros se generan y cómo</li>
+    <li><span class="step-num">→</span>Catálogo — importar / exportar equipos y agentes</li>
+    <li><span class="step-num">→</span>Import local — cargar tu configuración desde disco</li>
+  </ul>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:0.8em;">Demo en vivo → abre la extensión en VS Code</p>
+  <aside class="notes">
+    Demo en vivo de la extensión antes de entrar en conceptos. Navega por:
+    1. Dashboard: stats, equipo activo, banner de Engram.
+    2. Config de Engram: señala la ruta del .db y el botón de reset.
+    3. Sync: muestra los ficheros que se generan en .github/agents/.
+    4. Catálogo: importa el team-simple desde el catalog JSON del repo demo.
+    5. Import local: carga un fichero de configuración desde disco.
+    No expliques el por qué todavía — eso viene en las siguientes secciones.
+  </aside>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 1 — CONCEPTOS BÁSICOS DE IA
+══════════════════════════════════════════════════ -->
+
+<!-- 1.1 Title card -->
+<section data-background-gradient="radial-gradient(circle at 50% 45%, rgba(167,139,250,0.12), transparent 60%)">
+  <div class="section-title">Conceptos</div>
+  <h1>Antes de empezar</h1>
+  <h3>Los bloques fundamentales de la IA conversacional</h3>
+  <aside class="notes">
+    Antes de las demos necesitamos un lenguaje común. Estos 7 conceptos son los que usaremos
+    durante toda la sesión. No te agobies si no los conoces todos — están aquí para que la demo tenga sentido.
+  </aside>
+</section>
+
+<!-- 1.2 LLM -->
+<section>
+  <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--at-router);border:1px solid var(--at-router);">CONCEPTO</span>
+  <h2 style="color:var(--at-text); text-shadow:none; margin-top:0.3em;">LLM</h2>
+  <p style="font-size:0.6em; color:var(--at-muted); max-width:72%; margin:0.5em auto; line-height:1.8; text-align:left;">
+    <strong style="color:var(--at-text);">Large Language Model.</strong> Modelo estadístico entrenado para predecir el siguiente token a partir del texto de entrada. No razona: transforma entradas en salidas basándose en patrones aprendidos del entrenamiento.
+  </p>
+  <div class="quote-card" style="font-size:0.7em; margin-top:0.8em;">"El LLM no sabe quién eres ni qué pasó ayer.<br/>Solo ve el texto que hay en el contexto ahora mismo."</div>
+  <aside class="notes">
+    Un LLM es una función texto → texto muy sofisticada. La clave para la audiencia:
+    no tiene memoria entre sesiones, no razona en el sentido clásico, y todo lo que
+    "sabe" está determinado por su entrenamiento + lo que hay en el contexto activo.
+  </aside>
+</section>
+
+<!-- 1.3 Modelo -->
+<section>
+  <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--at-router);border:1px solid var(--at-router);">CONCEPTO</span>
+  <h2 style="color:var(--at-text); text-shadow:none; margin-top:0.3em;">Modelo</h2>
+  <p style="font-size:0.6em; color:var(--at-muted); max-width:72%; margin:0.5em auto; line-height:1.8; text-align:left;">
+    <strong style="color:var(--at-text);">Versión concreta de un LLM</strong> con sus propios límites de contexto, velocidad y capacidades: Claude Sonnet 4.5, GPT-4o, Gemini 2.5 Flash… Agent Teams es agnóstico al modelo.
+  </p>
+  <div class="quote-card" style="font-size:0.7em; margin-top:0.8em;">"Mismo AGENTS.md, distinto modelo → comportamiento diferente.<br/>El fichero define el rol; el modelo define la capacidad."</div>
+  <aside class="notes">
+    El concepto de modelo es importante para que la audiencia entienda que Agent Teams
+    no depende de un proveedor concreto. El AGENTS.md es portable: el mismo fichero
+    funciona con Claude, GPT-4o o cualquier modelo que soporte instrucciones de sistema.
+  </aside>
+</section>
+
+<!-- 1.4 Contexto -->
+<section>
+  <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--at-router);border:1px solid var(--at-router);">CONCEPTO</span>
+  <h2 style="color:var(--at-text); text-shadow:none; margin-top:0.3em;">Contexto</h2>
+  <p style="font-size:0.6em; color:var(--at-muted); max-width:72%; margin:0.5em auto; line-height:1.8; text-align:left;">
+    <strong style="color:var(--at-text);">La "ventana activa" del LLM:</strong> todo el texto que puede procesar en una sesión. Incluye el system prompt, el historial del chat y los archivos adjuntos. Cuando se llena, hay que compactar.
+  </p>
+  <div class="quote-card" style="font-size:0.7em; margin-top:0.8em;">"Si no está en el contexto, para el LLM no existe."</div>
+  <aside class="notes">
+    El contexto es el recurso más escaso en un sistema de agentes. Cada token que ocupa
+    el historial es un token menos para razonar sobre el problema actual. Por eso Engram
+    es clave: saca del contexto los datos que no necesitan estar ahí en todo momento.
+  </aside>
+</section>
+
+<!-- 1.5 Tokens -->
+<section>
+  <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--at-router);border:1px solid var(--at-router);">CONCEPTO</span>
+  <h2 style="color:var(--at-text); text-shadow:none; margin-top:0.3em;">Tokens</h2>
+  <p style="font-size:0.6em; color:var(--at-muted); max-width:72%; margin:0.5em auto; line-height:1.8; text-align:left;">
+    <strong style="color:var(--at-text);">La unidad mínima de procesamiento</strong> (~4 caracteres en inglés, algo menos en español). Determinan el coste de cada llamada y el límite de la ventana de contexto. Claude Sonnet 4.5 admite hasta 200 000 tokens.
+  </p>
+  <div style="display:flex; gap:1.5em; justify-content:center; font-size:0.5em; margin-top:0.6em; flex-wrap:wrap;">
+    <div style="background:var(--at-card); border:1px solid var(--at-border); border-radius:8px; padding:0.6em 1em; text-align:center;">
+      <div style="color:var(--at-muted); margin-bottom:0.3em;">Mensaje corto</div>
+      <div style="color:var(--at-text); font-weight:700; font-size:1.8em;">~10</div>
+      <div style="color:var(--at-dim);">tokens</div>
+    </div>
+    <div style="background:var(--at-card); border:1px solid var(--at-border); border-radius:8px; padding:0.6em 1em; text-align:center;">
+      <div style="color:var(--at-muted); margin-bottom:0.3em;">Fichero de código</div>
+      <div style="color:var(--at-engram); font-weight:700; font-size:1.8em;">~1 000</div>
+      <div style="color:var(--at-dim);">tokens</div>
+    </div>
+    <div style="background:var(--at-card); border:1px solid var(--at-border); border-radius:8px; padding:0.6em 1em; text-align:center;">
+      <div style="color:var(--at-muted); margin-bottom:0.3em;">Codebase grande</div>
+      <div style="color:var(--at-crimson-light); font-weight:700; font-size:1.8em;">+50 000</div>
+      <div style="color:var(--at-dim);">tokens</div>
+    </div>
+  </div>
+  <aside class="notes">
+    Los tokens son la métrica real que importa: cada API call se cobra por tokens.
+    Un sistema de agentes que reprocesan el mismo contexto una y otra vez es costoso.
+    Engram ayuda a mantener el contexto activo pequeño y relevante.
+  </aside>
+</section>
+
+<!-- 1.6 AGENTS.md -->
+<section>
+  <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--at-router);border:1px solid var(--at-router);">CONCEPTO</span>
+  <h2 style="color:var(--at-text); text-shadow:none; margin-top:0.3em;">AGENTS.md</h2>
+  <p style="font-size:0.6em; color:var(--at-muted); max-width:72%; margin:0.5em auto; line-height:1.8; text-align:left;">
+    <strong style="color:var(--at-text);">El system prompt declarativo del agente.</strong> Define su identidad, rol, protocolo y restricciones. Agent Teams lo genera desde un YAML y lo sincroniza en <code>.github/agents/</code>. Cambiar el fichero = cambiar el comportamiento del agente.
+  </p>
+  <div class="engram-key" style="margin-top:0.6em;">.github/agents/{agentId}.md</div>
+  <aside class="notes">
+    AGENTS.md es el fichero que Copilot Chat lee como system prompt cuando el usuario
+    invoca @agent-name. Agent Teams lo genera automáticamente desde el AgentSpec YAML
+    y lo mantiene sincronizado. La audiencia no tiene que escribir AGENTS.md a mano.
+  </aside>
+</section>
+
+<!-- 1.7 SKILL.md -->
+<section>
+  <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--at-router);border:1px solid var(--at-router);">CONCEPTO</span>
+  <h2 style="color:var(--at-text); text-shadow:none; margin-top:0.3em;">SKILL.md</h2>
+  <p style="font-size:0.6em; color:var(--at-muted); max-width:72%; margin:0.5em auto; line-height:1.8; text-align:left;">
+    <strong style="color:var(--at-text);">Instrucciones especializadas inyectadas bajo demanda.</strong> No forman parte del system prompt base — se cargan cuando el agente necesita una capacidad concreta: tests, diagramas, APIs...
+  </p>
+  <div class="quote-card" style="font-size:0.7em; margin-top:0.8em;">
+    "Ahorra tokens: solo cargas las instrucciones que necesitas,<br/>cuando las necesitas."
+  </div>
+  <aside class="notes">
+    Los skills son bloques de instrucciones reutilizables que el agente puede importar
+    dinámicamente. En lugar de tener un AGENTS.md gigante con todo, tienes uno ligero
+    que carga los skills relevantes para cada tarea.
+    El Skills Browser en el Dashboard muestra todos los skills disponibles.
+  </aside>
+</section>
+
+<!-- 1.8 Compactación -->
+<section>
+  <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--at-router);border:1px solid var(--at-router);">CONCEPTO</span>
+  <h2 style="color:var(--at-text); text-shadow:none; margin-top:0.3em;">Compactación</h2>
+  <p style="font-size:0.6em; color:var(--at-muted); max-width:72%; margin:0.5em auto; line-height:1.8; text-align:left;">
+    <strong style="color:var(--at-text);">Cuando el contexto supera su límite,</strong> el LLM (o el IDE) resume el historial en un fragmento más corto. Se pierde detalle. Si los datos críticos solo vivían en el chat, se pierden para siempre.
+  </p>
+  <div class="quote-card" style="font-size:0.7em; margin-top:0.8em;">
+    "Engram es la solución a la compactación.<br/>Los resultados importantes viven fuera del contexto, en disco."
+  </div>
+  <aside class="notes">
+    Este es el "aha moment" que conecta conceptos con Engram. La compactación es el enemigo
+    de los sistemas de agentes de larga duración. Engram resuelve esto almacenando los
+    resultados intermedios fuera del contexto. Aunque el chat se compacte, los datos siguen ahí.
+  </aside>
+</section>
+
+<!-- 1.9 Pausa — conceptos -->
+<section data-background-gradient="radial-gradient(circle at 50% 50%, rgba(167,139,250,0.08), transparent 70%)">
+  <h1 style="font-size:2.5em;">☕ Preguntas</h1>
+  <h3>¿Alguna duda sobre los conceptos?</h3>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:1em;">~5 min</p>
+  <aside class="notes">
+    Pausa breve antes de entrar en arquitectura y demos. Si alguien no tiene claro algún término,
+    ahora es el momento — los usaremos constantemente en el resto de la sesión.
+  </aside>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 2 — ARQUITECTURA Y CONTEXTO
+══════════════════════════════════════════════════ -->
+
+<!-- 2.1 El problema -->
+<section>
+  <h2>El problema</h2>
+  <ul style="font-size:0.65em; text-align:left; max-width:75%; margin:0.8em auto; line-height:2;">
+    <li class="fragment">Cada agente reinventa el contexto desde cero</li>
+    <li class="fragment">Sin coordinación, el trabajo se duplica o se contradice</li>
+    <li class="fragment">La memoria desaparece al cerrar el chat</li>
+    <li class="fragment">Imposible paralelizar sin un bus de estado compartido</li>
+  </ul>
+  <aside class="notes">
+    El pain point clásico: usas Claude/Copilot para tareas grandes, el contexto se pierde,
+    dos agentes hacen lo mismo, no hay orquestación. Agent Teams resuelve esto con arquitectura en capas
+    y memoria persistente (Engram).
+  </aside>
+</section>
+
+<!-- 2.2 Qué es Agent Teams -->
+<section>
+  <h2>¿Qué es Agent Teams?</h2>
+  <ul style="font-size:0.65em; text-align:left; max-width:75%; margin:0.8em auto; line-height:2.2;">
+    <li class="fragment">🎯 <strong>Coordinación declarativa</strong> — defines equipos en YAML, no en código</li>
+    <li class="fragment">🧠 <strong>Memoria persistente con Engram</strong> — los agentes no repiten trabajo ya hecho</li>
+    <li class="fragment">⚡ <strong>Paralelismo real</strong> — múltiples agentes trabajando simultáneamente sin conflictos</li>
+  </ul>
+  <aside class="notes">
+    Tres beneficios clave. La coordinación declarativa significa que cambiar de equipo es cambiar un fichero YAML.
+    Engram es el bus de memoria compartida. El paralelismo con aggregator resuelve conflictos automáticamente.
+  </aside>
+</section>
+
+<!-- 2.3 Las piezas clave -->
+<section>
+  <h2>Las piezas clave</h2>
+  <div class="pipeline" style="margin:0.8em 0; flex-direction:column; gap:0.6em;">
+    <div style="display:flex; align-items:center; gap:0.4em; flex-wrap:wrap; justify-content:center;">
+      <div class="pipeline-node node-user">Usuario</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node node-router">Router <span class="badge badge-router">analiza intent</span></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node node-orch">Orchestrator <span class="badge badge-orch">descompone</span></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node node-worker">Worker <span class="badge badge-worker">ejecuta</span></div>
+    </div>
+    <div style="margin-top:0.4em; display:flex; align-items:center; gap:0.6em; justify-content:center; flex-wrap:wrap;">
+      <div class="pipeline-node node-engram" style="font-size:0.9em;">
+        ⬡ Engram <span class="badge badge-engram">memoria persistente</span>
+      </div>
+      <span style="font-size:0.5em; color:var(--at-dim);">← todas las capas leen y escriben aquí</span>
+    </div>
+  </div>
+  <aside class="notes">
+    El Router analiza el prompt y decide a quién delegar — nunca ejecuta él mismo.
+    El Orchestrator descompone la tarea en pasos — nunca escribe ficheros.
+    El Worker ejecuta la tarea concreta.
+    Engram es el estado compartido: todos escriben, todos leen. Sin Engram, no hay paralelismo.
+  </aside>
+</section>
+
+<!-- 2.4 Setup mental -->
+<section>
+  <div class="principle">
+    "Hoy no voy a explicar código.<br/>
+    Voy a ejecutar prompts y que los agentes trabajen."
+  </div>
+  <p class="fragment" style="font-size:0.55em; color:var(--at-muted); margin-top:1em;">
+    En el repositorio de la demo encontrarás un fichero exportable<br/>
+    con el que puedes repetir todo lo que verás hoy.
+  </p>
+  <aside class="notes">
+    Setup mental importante. Lo que importa no es cómo está programado el agente,
+    sino qué hace y por qué. Iremos slide a slide explicando cada paso antes de ejecutar.
+  </aside>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 3 — DEMO 1: PIPELINE SIMPLE
+══════════════════════════════════════════════════ -->
+
+<!-- 2.1 Title card -->
+<section data-background-gradient="radial-gradient(circle at 60% 40%, rgba(255,0,54,0.12), transparent 60%)">
+  <div class="section-title">Demo 1</div>
+  <h1>Pipeline Simple</h1>
+  <h3>Router → Orchestrator → Worker</h3>
+  <div class="section-time">~20 min · equipo: <code style="color:var(--at-router);">team-simple</code></div>
+  <aside class="notes">
+    Primera demo. El flujo más básico: un prompt, una tarea, el pipeline completo funcionando de cabo a rabo.
+    Asegúrate de tener team-simple activo en el Dashboard antes de ejecutar.
+  </aside>
+</section>
+
+<!-- 2.2 El prompt -->
+<section>
+  <h2>El prompt</h2>
+  <div class="prompt-block">
+    Crea un componente Button con variantes<br/>
+    <strong>primary</strong> y <strong>secondary</strong>
+  </div>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:0.8em;">→ Ejecutar en <code>@router</code></p>
+  <aside class="notes">
+    Prompt intencionalmente simple. Queremos ver la cadena completa, no la complejidad del resultado.
+    Antes de ejecutar, explica: el router va a analizar este texto, detectar el intent y decidir a qué
+    orchestrator delegarlo.
+  </aside>
+</section>
+
+<!-- 2.3 Flujo animado -->
+<section>
+  <h2>Lo que va a pasar</h2>
+  <div class="pipeline" style="margin:1em 0;">
+    <div class="pipeline-node node-user fragment">Usuario</div>
+    <div class="pipeline-arrow fragment">→</div>
+    <div class="pipeline-node node-router fragment">Router</div>
+    <div class="pipeline-arrow fragment">→</div>
+    <div class="pipeline-node node-orch fragment">Frontend Orchestrator</div>
+    <div class="pipeline-arrow fragment">→</div>
+    <div class="pipeline-node node-worker fragment">Component Worker</div>
+  </div>
+  <aside class="notes">
+    Muestra este slide ANTES de ejecutar el prompt. Explica cada nodo en orden.
+    Después ejecuta el prompt y haz referencia a este flujo durante la ejecución.
+  </aside>
+</section>
+
+<!-- 2.4 El Router -->
+<section>
+  <span class="badge badge-router" style="font-size:0.8em;">ROUTER</span>
+  <h2 style="color:var(--at-router);">El Router analiza el intent</h2>
+  <ul class="step-list">
+    <li><span class="step-num">1.</span>Lee el prompt → detecta <code>component_creation</code></li>
+    <li><span class="step-num">2.</span>Busca en Engram patrones previos de routing</li>
+    <li><span class="step-num">3.</span>Escribe en Engram la evaluación: <span class="engram-key">handoff:{taskId}</span></li>
+    <li><span class="step-num">4.</span>Llama a <code>agent-teams-handoff</code> → abre chat con el Orchestrator</li>
+  </ul>
+  <aside class="notes">
+    El Router NUNCA ejecuta código ni escribe ficheros. Solo analiza y delega.
+    Escribe en Engram para que el Orchestrator pueda reconstruir el contexto
+    sin necesitar el historial del chat.
+  </aside>
+</section>
+
+<!-- 2.5 El Orchestrator -->
+<section>
+  <span class="badge badge-orch" style="font-size:0.8em;">ORCHESTRATOR</span>
+  <h2 style="color:var(--at-orchestrator);">El Orchestrator descompone</h2>
+  <ul class="step-list">
+    <li><span class="step-num">1.</span>Recuerda el contexto de Engram: <span class="engram-key">handoff:{taskId}</span></li>
+    <li><span class="step-num">2.</span>Descompone la tarea en pasos atómicos</li>
+    <li><span class="step-num">3.</span>Step 1 → analizar el contexto del proyecto</li>
+    <li><span class="step-num">4.</span>Step 2 → crear el componente Button</li>
+    <li><span class="step-num">5.</span>Delega cada paso al Worker</li>
+  </ul>
+  <aside class="notes">
+    El Orchestrator NUNCA escribe ficheros ni ejecuta comandos. Solo planifica.
+    La clave: empieza leyendo Engram, no el chat. Esto permite que cualquier agente
+    retome el trabajo en cualquier momento.
+  </aside>
+</section>
+
+<!-- 2.6 El Worker -->
+<section>
+  <span class="badge badge-worker" style="font-size:0.8em;">WORKER</span>
+  <h2 style="color:var(--at-worker);">El Worker ejecuta</h2>
+  <ul class="step-list">
+    <li><span class="step-num">1.</span>Recibe las instrucciones del Orchestrator</li>
+    <li><span class="step-num">2.</span>Analiza el contexto del proyecto (estilos, framework…)</li>
+    <li><span class="step-num">3.</span>Genera el componente <code>Button.tsx</code></li>
+    <li><span class="step-num">4.</span>Persiste el resultado en Engram: <span class="engram-key">frontend:patterns</span></li>
+  </ul>
+  <aside class="notes">
+    El Worker es el único que toca ficheros. Escribe en Engram sus patrones para que
+    el siguiente worker en la cadena no tenga que redescubrir el proyecto.
+  </aside>
+</section>
+
+<!-- 2.7 Principio -->
+<section>
+  <div class="quote-card">
+    "Cada capa tiene una sola responsabilidad.<br/>
+    El Router no ejecuta. El Orchestrator no escribe.<br/>
+    El Worker no decide."
+  </div>
+  <aside class="notes">
+    Este es el principio de diseño central. La separación de responsabilidades es lo que permite
+    el paralelismo de la siguiente demo.
+  </aside>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 4 — DEMO 2: DISPATCH PARALELO
+══════════════════════════════════════════════════ -->
+
+<!-- 3.1 Title card -->
+<section data-background-gradient="radial-gradient(circle at 40% 60%, rgba(255,0,54,0.12), transparent 60%)">
+  <div class="section-title">Demo 2</div>
+  <h1>Dispatch Paralelo</h1>
+  <h3>Frontend + Backend simultáneamente</h3>
+  <div class="section-time">~25 min · equipo: <code style="color:var(--at-router);">team-parallel</code></div>
+  <aside class="notes">
+    Ahora una tarea que cruza fronteras: frontend Y backend a la vez.
+    Aquí es donde la arquitectura en capas brilla de verdad.
+    Cambia al equipo team-parallel en el Dashboard antes de ejecutar.
+  </aside>
+</section>
+
+<!-- 3.2 El prompt -->
+<section>
+  <h2>El prompt</h2>
+  <div class="prompt-block">
+    Añade un endpoint de login y el formulario<br/>
+    de login en el frontend
+  </div>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:0.8em;">→ Ejecutar en <code>@router</code></p>
+  <aside class="notes">
+    Un solo prompt. El Router detectará que hay dos dominios: frontend Y backend.
+    Nadie le dijo explícitamente "hay frontend y backend". Lo infiere del prompt.
+  </aside>
+</section>
+
+<!-- 3.3 Fan-out -->
+<section>
+  <h2>El Router detecta dominios múltiples</h2>
+  <div class="pipeline" style="flex-direction:column; gap:0.6em;">
+    <div style="display:flex; align-items:center; gap:0.4em; justify-content:center;">
+      <div class="pipeline-node node-user">Usuario</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node node-router">Router</div>
+    </div>
+    <div style="font-size:0.5em; color:var(--at-dim); text-align:center;">
+      detecta: <strong>frontend</strong> + <strong>backend</strong> → llama a <code>agent-teams-dispatch-parallel</code>
+    </div>
+    <div style="display:flex; gap:1.5em; justify-content:center;">
+      <div class="pipeline-node node-orch">Frontend Orchestrator</div>
+      <div class="pipeline-node node-orch">Backend Orchestrator</div>
+    </div>
+  </div>
+  <aside class="notes">
+    El Router escribe en Engram la evaluación para CADA orchestrator por separado.
+    Luego llama a dispatch-parallel con la lista de subtareas.
+    Esto abre DOS chats en paralelo de forma simultánea.
+  </aside>
+</section>
+
+<!-- 3.4 Paralelo visual -->
+<section>
+  <h2>Dos chats en paralelo</h2>
+  <div class="cols" style="font-size:0.58em; margin-top:0.6em;">
+    <div class="col" style="background:var(--at-card); border:1px solid var(--at-orchestrator); border-radius:10px; padding:0.8em;">
+      <div style="color:var(--at-orchestrator); font-weight:700; margin-bottom:0.5em;">🖥 Frontend Orchestrator</div>
+      <ul style="list-style:none; padding:0; line-height:1.8; color:var(--at-muted);">
+        <li>→ Analiza el proyecto React</li>
+        <li>→ Diseña el formulario</li>
+        <li>→ Delega a Component Worker</li>
+        <li>→ Escribe <span class="engram-key" style="font-size:0.78em;">task:{id}:subtask:frontend:result</span></li>
+      </ul>
+    </div>
+    <div class="col" style="background:var(--at-card); border:1px solid var(--at-orchestrator); border-radius:10px; padding:0.8em;">
+      <div style="color:var(--at-orchestrator); font-weight:700; margin-bottom:0.5em;">⚙️ Backend Orchestrator</div>
+      <ul style="list-style:none; padding:0; line-height:1.8; color:var(--at-muted);">
+        <li>→ Analiza el framework API</li>
+        <li>→ Diseña el endpoint</li>
+        <li>→ Delega a API Worker</li>
+        <li>→ Escribe <span class="engram-key" style="font-size:0.78em;">task:{id}:subtask:backend:result</span></li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    Ambos chats se abren a la vez. Mientras el frontend trabaja, el backend trabaja.
+    Ninguno sabe del otro — solo Engram los conecta.
+    TaskCoordinator monitoriza los ficheros de coordinación y detecta cuándo los dos terminan.
+  </aside>
+</section>
+
+<!-- 3.5 Workers en paralelo -->
+<section>
+  <h2>Los Workers ejecutan</h2>
+  <div style="display:flex; gap:2em; justify-content:center; align-items:flex-start; font-size:0.65em; margin-top:0.6em;">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:0.4em;">
+      <div class="pipeline-node node-orch">Frontend Orch.</div>
+      <div class="pipeline-arrow" style="transform:rotate(90deg);">→</div>
+      <div class="pipeline-node node-worker">Component Worker</div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:0.4em;">
+      <div class="pipeline-node node-orch">Backend Orch.</div>
+      <div class="pipeline-arrow" style="transform:rotate(90deg);">→</div>
+      <div class="pipeline-node node-worker">API Worker</div>
+    </div>
+  </div>
+  <p style="font-size:0.5em; color:var(--at-muted); margin-top:0.8em;">
+    Cuando ambos terminan → <strong style="color:var(--at-crimson-light);">TaskCoordinator</strong> dispara al Aggregator automáticamente.
+  </p>
+  <aside class="notes">
+    Cuatro agentes trabajando: 2 orchestrators + 2 workers. Todo en paralelo.
+    Cuando los dos orchestrators llaman a complete_subtask, el TaskCoordinator
+    dispara automáticamente al Aggregator.
+  </aside>
+</section>
+
+<!-- 3.6 El Aggregator -->
+<section>
+  <span class="badge badge-agg" style="font-size:0.8em;">AGGREGATOR</span>
+  <h2 style="color:var(--at-crimson-light);">El Aggregator unifica</h2>
+  <ul class="step-list">
+    <li><span class="step-num">1.</span>Recoge <span class="engram-key">task:{id}:subtask:*:result</span> de Engram</li>
+    <li><span class="step-num">2.</span>Detecta conflictos de ficheros entre frontend y backend</li>
+    <li><span class="step-num">3.</span>Produce la respuesta unificada</li>
+    <li><span class="step-num">4.</span>Escribe <span class="engram-key">task:{id}:result</span></li>
+  </ul>
+  <aside class="notes">
+    El Aggregator no tiene acceso al chat de los orchestrators.
+    Todo lo que sabe viene de Engram. Aquí es evidente por qué Engram es indispensable.
+  </aside>
+</section>
+
+<!-- 3.7 Sin Engram -->
+<section>
+  <div class="quote-card">
+    "Sin Engram, el paralelismo es imposible.<br/>
+    Cada agente trabaja en su propio contexto aislado.<br/>
+    Engram es el bus que los conecta."
+  </div>
+  <aside class="notes">
+    Momento de pausa reflexiva. Esto es lo que separa Agent Teams de "usar varios chats de Claude".
+  </aside>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 5 — PAUSA / Q&A INTERMEDIA
+══════════════════════════════════════════════════ -->
+
+<!-- 4.1 Pausa -->
+<section data-background-gradient="radial-gradient(circle at 50% 50%, rgba(255,0,54,0.08), transparent 70%)">
+  <h1 style="font-size:2.5em;">☕ Pausa</h1>
+  <h3>Preguntas del chat</h3>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:1em;">~10 min</p>
+  <aside class="notes">
+    Lee las preguntas del chat. Responde las que puedas sin desviarte demasiado.
+    Las preguntas técnicas profundas: "lo veremos en las siguientes demos".
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 6 — DEMO 3: WORKER AUTÓNOMO
+══════════════════════════════════════════════════ -->
+
+<!-- 5.1 Title card -->
+<section data-background-gradient="radial-gradient(circle at 30% 70%, rgba(96,165,250,0.1), transparent 60%)">
+  <div class="section-title">Demo 3</div>
+  <h1>Worker Autónomo</h1>
+  <h3>Sin Router ni Orchestrator</h3>
+  <div class="section-time">~15 min · equipo: <code style="color:var(--at-worker);">team-autonomous</code></div>
+  <aside class="notes">
+    No siempre necesitas el pipeline completo. Para tareas bien definidas y acotadas,
+    puedes ir directamente al Worker. Esto es el modo autónomo.
+    ⚠️ Asegúrate de que Engram NO tiene la clave ui:analysis antes de ejecutar.
+  </aside>
+</section>
+
+<!-- 5.2 El prompt -->
+<section>
+  <h2>El prompt</h2>
+  <div class="prompt-block">
+    Analiza todos los componentes de /src/ui<br/>
+    y dime cuáles no tienen tests
+  </div>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:0.8em;">→ Ejecutar directamente en <code>@ui-analyst-worker</code></p>
+  <p style="font-size:0.45em; color:var(--at-engram); margin-top:0.3em;">⚠️ Engram debe estar limpio (sin ui:analysis:*)</p>
+  <p style="font-size:0.45em; color:var(--at-engram); margin-top:0.3em;">Remove-Item .engram\engram.db -ErrorAction SilentlyContinue</p>
+
+  <aside class="notes">
+    La tarea es clara y acotada. No necesita descomposición.
+    ¡Anota el tiempo que tarda! Lo vas a usar en la Demo 4.
+    El contraste demo3 vs demo4 es el momento más impactante de la sesión.
+  </aside>
+</section>
+
+<!-- 5.3 Flujo directo -->
+<section>
+  <h2>Flujo directo</h2>
+  <div class="pipeline" style="margin:1em 0;">
+    <div class="pipeline-node node-user">Usuario</div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-node node-worker" style="font-size:1.05em; padding:0.5em 1em;">UI Analyst Worker</div>
+  </div>
+  <p style="font-size:0.55em; color:var(--at-muted); margin-top:0.6em;">
+    Sin indirecciones.<br/>
+    El Worker recoge el contexto de Engram y ejecuta directamente.
+  </p>
+  <aside class="notes">
+    La simplicidad aquí es intencional. Para tareas repetibles y acotadas, el overhead del
+    pipeline completo no aporta valor. El Worker autónomo es la versión "script" del sistema.
+  </aside>
+</section>
+
+<!-- 5.4 engram.mode autonomous -->
+<section>
+  <h2><code>engram.mode: autonomous</code></h2>
+  <pre><code class="language-yaml">identity:
+  id: ui-analyst-worker
+  role: worker
+
+engram:
+  mode: autonomous         # acepta dispatch directo
+  recall:
+    - "ui:analysis:{date}" # lee análisis previo si existe
+  remember:
+    - "ui:analysis:{date}" # persiste el resultado</code></pre>
+  <aside class="notes">
+    Dos campos clave: mode: autonomous permite que el Router lo invoque directamente.
+    recall: le dice qué claves leer al empezar. remember: qué escribir al terminar.
+    Esto es lo que habilita la Demo 4.
+  </aside>
+</section>
+
+<!-- 5.5 Mide el tiempo -->
+<section>
+  <div style="font-size:0.65em; color:var(--at-muted); margin-bottom:0.8em;">Demo 3 completada ✓</div>
+    <!-- Timer Demo 3: arranca aquí, rellena ~X s en slide 6.3 y __ s en slide 5.5 -->
+  <div class="at-timer-panel" style="margin-top:0.6em;">
+    <div class="timer-row">
+      <span class="timer-label">Demo 3 <span style="font-size:0.8em;color:var(--at-dim);">sin Engram</span></span>
+      <span id="timer3-display" class="timer-display">00:00</span>
+      <button class="timer-btn" id="timer3-btn" onclick="atTimerToggle(3)">▶ Start</button>
+      <button class="timer-reset" onclick="atTimerReset(3)" title="Reset">↺</button>
+    </div>
+  </div>
+  <div class="compare-row">
+    <div class="compare-card highlight">
+      <div class="label">Demo 3 — Primera vez</div>
+      <div id="demo3-value-55" class="value slow">__ s</div>
+      <div style="font-size:0.6em; color:var(--at-dim); margin-top:0.3em;">análisis completo desde cero</div>
+    </div>
+    <div class="compare-card">
+      <div class="label">Demo 4 — Con Engram</div>
+      <div class="value" style="color:var(--at-dim);">???</div>
+      <div style="font-size:0.6em; color:var(--at-dim); margin-top:0.3em;">próxima demo</div>
+    </div>
+  </div>
+  <p style="font-size:0.45em; color:var(--at-dim); margin-top:0.6em;">No resetees Engram entre Demo 3 y Demo 4.</p>
+  <aside class="notes">
+    Anota el tiempo en voz alta. Ponlo en el compare-card de "Demo 3" si puedes editar en directo,
+    o simplemente dilo y recuérdalo para el slide de contraste de la Demo 4.
+  </aside>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 7 — DEMO 4: EL PODER DE ENGRAM
+══════════════════════════════════════════════════ -->
+
+<!-- 6.1 Title card -->
+<section data-background-gradient="radial-gradient(circle at 50% 30%, rgba(245,158,11,0.15), transparent 60%)">
+  <div class="section-title">Demo 4</div>
+  <h1>El poder de Engram</h1>
+  <h3>Mismo prompt. Resultado instantáneo.</h3>
+  <div class="section-time">~20 min · equipo: <code style="color:var(--at-engram);">team-autonomous</code></div>
+  <aside class="notes">
+    Vamos a repetir exactamente el mismo prompt de la Demo 3. Pero ahora Engram tiene el resultado
+    del análisis anterior. El Worker no va a repetir el trabajo.
+    ✅ Engram debe tener el resultado de la Demo 3.
+  </aside>
+</section>
+
+<!-- 6.2 Mismo prompt -->
+<section>
+  <h2>Exactamente el mismo prompt</h2>
+  <div class="prompt-block">
+    Analiza todos los componentes de /src/ui<br/>
+    y dime cuáles no tienen tests
+  </div>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:0.8em;">→ Mismo worker: <code>@ui-analyst-worker</code></p>
+  <p style="font-size:0.45em; color:var(--at-orchestrator); margin-top:0.3em;">✅ Engram tiene el resultado de la Demo 3</p>
+  <aside class="notes">
+    No cambies nada. Ni una letra. Ese es el experimento: mismo input, contexto diferente.
+  </aside>
+</section>
+
+<!-- 6.3 Contraste -->
+<section>
+  <h2>El resultado</h2>
+
+  <div class="at-timer-panel" style="margin-top:0.6em;">
+    <div class="timer-row">
+      <span class="timer-label">Demo 4 <span style="font-size:0.8em;color:var(--at-dim);">con Engram</span></span>
+      <span id="timer4-display" class="timer-display">00:00</span>
+      <button class="timer-btn" id="timer4-btn" onclick="atTimerToggle(4)">▶ Start</button>
+      <button class="timer-reset" onclick="atTimerReset(4)" title="Reset">↺</button>
+    </div>
+  </div>
+  <div class="compare-row" style="margin-top:0.8em;">
+      <!-- Timer Demo 4: arranca aquí, rellena ~Y s en slide 6.3 -->
+    <div class="compare-card">
+      <div class="label">Demo 3 — Engram vacío</div>
+      <div id="demo3-value-63" class="value slow">~X s</div>
+      <div style="font-size:0.6em; color:var(--at-dim); margin-top:0.3em;">análisis completo del filesystem</div>
+    </div>
+    <div class="compare-card highlight">
+      <div class="label">Demo 4 — Engram caliente</div>
+      <div id="demo4-value-63" class="value fast">~Y s</div>
+      <div style="font-size:0.6em; color:var(--at-orchestrator); margin-top:0.3em;">recupera resultado directamente</div>
+    </div>
+  </div>
+  <p class="fragment" style="font-size:0.5em; color:var(--at-muted); margin-top:0.8em;">
+    El Worker recuerda el análisis previo y lo devuelve sin recorrer el filesystem de nuevo.
+  </p>
+  <aside class="notes">
+    Actualiza los valores en voz alta con los tiempos reales.
+    El impacto visual es inmediato. Este es el argumento de venta de Engram.
+  </aside>
+</section>
+
+<!-- 6.4 Patrones de clave -->
+<section>
+  <h2>Patrones de clave en Engram</h2>
+  <div class="key-pattern">
+    <div>
+      <span class="key-part-task">task</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-task">{taskId}</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-subtask">subtask</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-agent">{agentId}</span>
+    </div>
+    <div>
+      <span class="key-part-task">task</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-task">{taskId}</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-subtask">subtask</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-agent">{agentId}</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-result">result</span>
+    </div>
+    <div style="margin-top:0.4em; opacity:0.7;">
+      <span class="key-part-agent">ui</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-result">analysis</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-task">{date}</span>
+    </div>
+    <div style="opacity:0.7;">
+      <span class="key-part-agent">frontend</span>
+      <span style="color:var(--at-dim);">:</span>
+      <span class="key-part-subtask">patterns</span>
+    </div>
+  </div>
+  <p style="font-size:0.48em; color:var(--at-dim); margin-top:0.5em;">
+    Cada capa tiene su propio espacio de nombres en Engram.
+  </p>
+  <aside class="notes">
+    El naming convention no es arbitrario. El Aggregator busca exactamente
+    task:{taskId}:subtask:*:result para saber qué recoger. Si el worker no escribe
+    con esa clave, el Aggregator no lo encuentra.
+  </aside>
+</section>
+
+<!-- 6.5 La diferencia -->
+<section>
+  <div class="quote-card" style="font-size:0.9em; line-height:1.8;">
+    "Esto es lo que diferencia un sistema de agentes<br/>
+    <strong style="color:var(--at-muted);">desechable</strong><br/>
+    de uno <strong style="color:var(--at-orchestrator);">productivo</strong>."
+  </div>
+  <aside class="notes">
+    Momento de pausa. Esta es la frase que quieres que se lleven de la sesión.
+    Un sistema sin memoria es un juguete. Un sistema con memoria persistente es infraestructura.
+  </aside>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 9 — CAMBIAR DE EQUIPO EN CALIENTE
+══════════════════════════════════════════════════ -->
+
+<!-- 7.1 Equipos preconfigurados -->
+<section>
+  <h2>Equipos preconfigurados</h2>
+  <table class="team-table">
+    <thead>
+      <tr>
+        <th>Equipo</th>
+        <th>Agentes incluidos</th>
+        <th>Usado en</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>team-simple</td>
+        <td>router · frontend-orchestrator · component-worker</td>
+        <td>Demo 1</td>
+      </tr>
+      <tr>
+        <td>team-parallel</td>
+        <td>router · frontend-orch · backend-orch · aggregator · workers</td>
+        <td>Demo 2</td>
+      </tr>
+      <tr>
+        <td>team-autonomous</td>
+        <td>router · ui-analyst-worker</td>
+        <td>Demo 3 &amp; 4</td>
+      </tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    El proyecto demo ya tiene los tres equipos cargados.
+    Ahora vamos a cambiar entre ellos sin tocar un solo fichero YAML.
+  </aside>
+</section>
+
+<!-- 7.2 Hot swap desde el Dashboard -->
+<section>
+  <h2>Cambio de equipo en caliente</h2>
+  <ul class="step-list">
+    <li><span class="step-num">1.</span>Abrir el Dashboard de la extensión</li>
+    <li><span class="step-num">2.</span>Team Manager → seleccionar equipo</li>
+    <li><span class="step-num">3.</span>Clic en <strong>"Set as active"</strong></li>
+    <li><span class="step-num">4.</span>Sync → los ficheros <code>.github/agents/</code> se actualizan</li>
+    <li><span class="step-num">5.</span>Los agentes de Copilot Chat cambian al instante</li>
+  </ul>
+  <aside class="notes">
+    Demuéstralo en vivo. Cambia de team-simple a team-parallel, sincroniza, y muestra cómo
+    los agentes disponibles en el chat cambian.
+  </aside>
+</section>
+
+<!-- 7.3 Mismo prompt, distintos agentes -->
+<section>
+  <h2>Mismo prompt, equipo diferente</h2>
+  <div class="cols" style="font-size:0.58em; gap:1em; margin-top:0.6em;">
+    <div class="col" style="background:var(--at-card); border:1px solid var(--at-border); border-radius:8px; padding:0.8em; text-align:center;">
+      <div style="color:var(--at-muted); margin-bottom:0.6em; font-size:0.85em; font-family:monospace;">team-simple</div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:0.35em;">
+        <div class="pipeline-node node-router">Router</div>
+        <div class="pipeline-arrow" style="transform:rotate(90deg);">→</div>
+        <div class="pipeline-node node-orch">Frontend Orch.</div>
+        <div class="pipeline-arrow" style="transform:rotate(90deg);">→</div>
+        <div class="pipeline-node node-worker">Component Worker</div>
+      </div>
+    </div>
+    <div class="col" style="background:var(--at-card); border:1px solid var(--at-border); border-radius:8px; padding:0.8em; text-align:center;">
+      <div style="color:var(--at-muted); margin-bottom:0.6em; font-size:0.85em; font-family:monospace;">team-parallel</div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:0.35em;">
+        <div class="pipeline-node node-router">Router</div>
+        <div class="pipeline-arrow" style="transform:rotate(90deg);">→</div>
+        <div style="display:flex; gap:0.4em;">
+          <div class="pipeline-node node-orch" style="font-size:0.9em;">Frontend</div>
+          <div class="pipeline-node node-orch" style="font-size:0.9em;">Backend</div>
+        </div>
+        <div class="pipeline-arrow" style="transform:rotate(90deg);">→</div>
+        <div class="pipeline-node node-agg">Aggregator</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    El mismo "@router, crea un endpoint de login y el formulario" se comporta
+    diferente según el equipo activo. En team-simple, el router solo conoce el frontend-orchestrator.
+    En team-parallel, conoce frontend Y backend.
+  </aside>
+</section>
+
+<!-- 7.4 Principio -->
+<section>
+  <div class="principle">
+    "El equipo es configuración, no código."
+  </div>
+  <p class="fragment" style="font-size:0.55em; color:var(--at-muted); margin-top:1em;">
+    Cambiar de estrategia de desarrollo no requiere reescribir agentes.<br/>
+    Solo cambiar qué agentes están activos en el equipo.
+  </p>
+  <aside class="notes">
+    Este es el argumento de cierre de la sección. La flexibilidad no viene de código complejo,
+    viene de separación de responsabilidades + configuración declarativa.
+  </aside>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 8 — AGENT DESIGNER
+══════════════════════════════════════════════════ -->
+
+<!-- 8.1 Title card -->
+<section data-background-gradient="radial-gradient(circle at 55% 40%, rgba(52,211,153,0.12), transparent 60%)">
+  <div class="section-title">Demo 5</div>
+  <h1>Agent Designer</h1>
+  <h3>Diseña un agente nuevo desde lenguaje natural</h3>
+  <div class="section-time">~15 min · sin equipo previo</div>
+  <aside class="notes">
+    Agent Designer es el agente que genera AgentSpec YAML a partir de una descripción en lenguaje natural.
+    Lo invocarás con @agent-designer desde Copilot Chat. Esta demo muestra el meta-nivel:
+    usar el sistema para extender el propio sistema.
+  </aside>
+</section>
+
+<!-- 8.2 Qué es -->
+<section>
+  <h2>¿Qué hace Agent Designer?</h2>
+  <ul class="step-list" style="font-size:0.63em; max-width:80%; margin:0.6em auto;">
+    <li><span class="step-num">1.</span>Recibe una descripción en lenguaje natural del agente que necesitas</li>
+    <li><span class="step-num">2.</span>Lee el contexto del proyecto y la arquitectura existente</li>
+    <li><span class="step-num">3.</span>Genera un <strong>AgentSpec YAML</strong> válido y coherente con el equipo</li>
+    <li><span class="step-num">4.</span>El YAML se puede importar desde el Dashboard directamente</li>
+  </ul>
+  <p style="font-size:0.48em; color:var(--at-dim); margin-top:0.8em;">
+    Resultado → un fichero <code>.agent.yml</code> listo para sincronizar
+  </p>
+  <aside class="notes">
+    Agent Designer no ejecuta código ni crea ficheros directamente.
+    Su única responsabilidad es producir un YAML válido que puedas revisar antes de importar.
+    Es el único agente que trabaja sin necesitar un equipo activo previo.
+  </aside>
+</section>
+
+<!-- 8.3 El prompt -->
+<section>
+  <h2>El prompt</h2>
+  <div class="prompt-block">
+    Necesito un agente que revise Pull Requests:<br/>
+    analice el diff, detecte code smells y<br/>
+    sugiera mejoras siguiendo las convenciones del proyecto
+  </div>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:0.8em;">→ Ejecutar en <code>@agent-designer</code></p>
+  <aside class="notes">
+    Prompt intencionalmente concreto: queremos un PR reviewer.
+    Antes de ejecutar, señala que Agent Designer va a leer los agentes ya existentes
+    en el proyecto para que el nuevo sea coherente con el equipo.
+  </aside>
+</section>
+
+<!-- 8.4 Lo que genera -->
+<section>
+  <h2>El YAML generado</h2>
+  <pre><code class="language-yaml">identity:
+  id: pr-reviewer
+  role: worker
+  name: PR Reviewer
+
+instructions:
+  - Analiza el diff del PR buscando code smells
+  - Comprueba la coherencia con los patrones en Engram: frontend:patterns
+  - Sugiere mejoras respetando las convenciones del proyecto
+
+engram:
+  recall:
+    - "frontend:patterns"
+    - "task:{taskId}"
+  remember:
+    - "review:{prId}:result"</code></pre>
+  <aside class="notes">
+    Señala los tres bloques clave: identity (quién es), instructions (qué hace),
+    engram (qué lee y qué escribe). El agente no necesita saber nada más sobre la plomería
+    del sistema — Agent Teams lo gestiona todo.
+  </aside>
+</section>
+
+<!-- 8.5 Del YAML al agente en vivo -->
+<section>
+  <h2>Del YAML al agente en vivo</h2>
+  <div class="pipeline" style="flex-direction:column; gap:0.6em; font-size:0.65em;">
+    <div style="display:flex; align-items:center; gap:0.4em; justify-content:center;">
+      <div class="pipeline-node node-worker">Agent Designer</div>
+      <div class="pipeline-arrow">→</div>
+      <div style="background:var(--at-card); border:1px solid var(--at-border); border-radius:8px; padding:0.4em 0.8em; color:var(--at-muted);">pr-reviewer.agent.yml</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:0.4em; justify-content:center;">
+      <div style="font-size:0.85em; color:var(--at-dim);">Dashboard → Import → Sync</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:0.4em; justify-content:center;">
+      <div class="pipeline-node node-orch">.github/agents/pr-reviewer.md</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node node-router">@pr-reviewer disponible</div>
+    </div>
+  </div>
+  <p style="font-size:0.48em; color:var(--at-muted); margin-top:0.6em;">Demo en vivo: importa el YAML, sincroniza y abre <code>@pr-reviewer</code> en el chat.</p>
+  <aside class="notes">
+    Demo en vivo: copia el YAML generado, ábrelo en el Dashboard, importa, sincroniza.
+    Luego abre Copilot Chat, escribe @pr-reviewer y muestra que ya aparece como agente.
+    Este es el cierre de impacto: de la descripción en lenguaje natural al agente operativo
+    en menos de 2 minutos.
+  </aside>
+</section>
+
+<!-- 8.6 Principio -->
+<section>
+  <div class="principle">
+    "Creas agentes describiendo lo que necesitan hacer,<br/>
+    no programando cómo hacerlo."
+  </div>
+  <aside class="notes">
+    Momento de pausa reflexiva. Este es el argumento de venta de Agent Designer:
+    democratizar la creación de agentes para perfiles no técnicos.
+  </aside>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     SECCIÓN 10 — Q&A FINAL Y CIERRE
+══════════════════════════════════════════════════ -->
+
+<!-- 8.1 Q&A final -->
+<section data-background-gradient="radial-gradient(circle at 50% 50%, rgba(255,0,54,0.08), transparent 70%)">
+  <h1 style="font-size:2.2em;">🙋 Q&amp;A</h1>
+  <h3>Preguntas del chat</h3>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:1em;">~10 min</p>
+  <aside class="notes">
+    Lee las preguntas del chat. Tómate tu tiempo.
+    Las preguntas más técnicas pueden apuntarse para responder por escrito en el repo de la demo.
+  </aside>
+</section>
+
+<!-- 8.2 Recursos -->
+<section>
+  <h2>¿Dónde encontrarlo?</h2>
+  <ul class="resource-list">
+    <li>
+      <span>Extensión VS Code</span>
+      <code style="font-size:0.85em; color:var(--at-crimson-light);">https://agent-teams-docs.netlify.app/releases</code>
+    </li>
+    <li>
+      <span>Documentación</span>
+      <a href="https://agent-teams-docs.netlify.app/" target="_blank">https://agent-teams-docs.netlify.app/</a>
+    </li>
+    <li>
+      <span>Repositorio demo (con exportable)</span>
+      <a href="https://github.com/egdev6/agent-teams-demo" target="_blank">https://github.com/egdev6/agent-teams-demo</a>
+    </li>
+    <li>
+      <span>Comunidad / issues</span>
+      <a href="https://github.com/egdev6/agent-teams-docs/issues" target="_blank">https://github.com/egdev6/agent-teams-docs/issues</a>
+    </li>
+  </ul>
+  <p style="font-size:0.45em; color:var(--at-dim); margin-top:0.8em;">
+    Actualiza los links con las URLs reales antes del directo.
+  </p>
+  <aside class="notes">
+    El exportable del repo demo es el activo más valioso — todo lo que han visto hoy, reproducible.
+    Invita a dejar estrella en el repo.
+  </aside>
+</section>
+
+<!-- 8.3 Cierre -->
+<section data-background-gradient="radial-gradient(circle at 50% 40%, rgba(255,0,54,0.15), transparent 60%)">
+  <div style="width:100%;display:flex;justify-content:center;">
+    <img src="assets/icon.svg" class="cover-logo" alt="Agent Teams logo" style="width:72px;height:72px;" />
+  </div>
+  <h1>Agent Teams</h1>
+  <p style="font-size:0.6em; color:var(--at-muted); margin-top:0.5em;">
+    Gracias por estar aquí.
+  </p>
+  <p style="font-size:0.5em; color:var(--at-dim); margin-top:1.5em;">
+    Este fin de semana tendréis el directo de hoy en mi canal de youtube -> https://www.youtube.com/@egdev6
+  </p>
+  <aside class="notes">
+    Despedida. Recuerda mencionar el siguiente directo si lo tienes planeado.
+    Invita a compartir el enlace de la demo con quien pueda interesar.
+  </aside>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    controls: true,
+    progress: false,
+    center: true,
+    transition: 'slide',
+    transitionSpeed: 'fast',
+    backgroundTransition: 'fade',
+    plugins: [ RevealNotes, RevealHighlight ]
+  });
+</script>
+
+<!-- ─── Demo Timer ─── -->
+<script>
+(function () {
+  var state = {
+    3: { elapsed: 0, interval: null, running: false },
+    4: { elapsed: 0, interval: null, running: false }
+  };
+
+  var PLACEHOLDERS = { 3: '~X s', 4: '~Y s' };
+
+  function fmt(secs) {
+    var m = Math.floor(secs / 60);
+    var s = secs % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function getEls(n) {
+    return {
+      display: document.getElementById('timer' + n + '-display'),
+      btn:     document.getElementById('timer' + n + '-btn')
+    };
+  }
+
+  window.atTimerToggle = function (n) {
+    var s = state[n];
+    var el = getEls(n);
+    if (s.running) {
+      // Stop
+      clearInterval(s.interval);
+      s.interval = null;
+      s.running = false;
+      el.display.classList.remove('running');
+      el.display.classList.add(n === 3 ? 'done3' : 'done4');
+      el.btn.textContent = '▶ Start';
+      el.btn.classList.remove('running');
+      saveTime(n, s.elapsed);
+    } else {
+      // Start
+      s.running = true;
+      el.display.classList.add('running');
+      el.display.classList.remove('done3', 'done4');
+      el.btn.textContent = '⏹ Stop';
+      el.btn.classList.add('running');
+      s.interval = setInterval(function () {
+        s.elapsed++;
+        el.display.textContent = fmt(s.elapsed);
+      }, 1000);
+    }
+  };
+
+  window.atTimerReset = function (n) {
+    var s = state[n];
+    var el = getEls(n);
+    if (s.interval) clearInterval(s.interval);
+    s.interval = null;
+    s.running = false;
+    s.elapsed = 0;
+    el.display.textContent = '00:00';
+    el.display.classList.remove('running', 'done3', 'done4');
+    el.btn.textContent = '▶ Start';
+    el.btn.classList.remove('running');
+    localStorage.removeItem('at-timer-' + n);
+    // Restore placeholders
+    applyToTargets(n, PLACEHOLDERS[n]);
+  };
+
+  function saveTime(n, secs) {
+    var label = fmt(secs);
+    localStorage.setItem('at-timer-' + n, secs);
+    applyToTargets(n, label);
+  }
+
+  function applyToTargets(n, label) {
+    if (n === 3) {
+      var v55 = document.getElementById('demo3-value-55');
+      var v63 = document.getElementById('demo3-value-63');
+      if (v55) v55.textContent = label;
+      if (v63) v63.textContent = label;
+    } else {
+      var v = document.getElementById('demo4-value-63');
+      if (v) v.textContent = label;
+    }
+  }
+
+  // Restore saved times on load
+  document.addEventListener('DOMContentLoaded', function () {
+    [3, 4].forEach(function (n) {
+      var saved = localStorage.getItem('at-timer-' + n);
+      if (saved !== null) {
+        var secs = parseInt(saved, 10);
+        state[n].elapsed = secs;
+        var el = getEls(n);
+        if (el.display) {
+          el.display.textContent = fmt(secs);
+          el.display.classList.add(n === 3 ? 'done3' : 'done4');
+        }
+        applyToTargets(n, fmt(secs));
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+{
+  "exportedAt": "2026-03-19T00:35:18.696Z",
+  "version": 1,
+  "catalog": {
+    "version": 1,
+    "updatedAt": "2026-03-19T00:34:47.364Z",
+    "agents": {
+      "aggregator": {
+        "id": "aggregator",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "aggregator",
+          "name": "Aggregator",
+          "version": "1.0.0",
+          "role": "worker",
+          "domain": "general",
+          "description": "Collects the results of parallel sub-tasks from Engram, merges them into a unified coherent outcome, and writes the consolidated result to task:{taskId}:result. Triggered automatically by TaskCoordinator when all parallel subtasks have completed.\n",
+          "expertise": [
+            "result aggregation",
+            "Engram memory recall",
+            "parallel task coordination",
+            "summary generation",
+            "cross-domain result unification"
+          ],
+          "intents": [
+            "aggregate_parallel_results",
+            "merge_subtask_outputs",
+            "write_final_result"
+          ],
+          "scope": {
+            "topics": [
+              "parallel sub-task result aggregation",
+              "result unification across domains"
+            ]
+          },
+          "workflow": [
+            "Recall all task:{taskId}:subtask:*:result entries from Engram.",
+            "Identify which sub-tasks have completed and which (if any) are missing.",
+            "Merge all results into a coherent unified outcome, resolving any conflicts.",
+            "Write the final aggregated result to Engram as task:{taskId}:result.",
+            "Present a structured summary listing each completed sub-task and its contribution."
+          ],
+          "tools": [
+            {
+              "name": "search/codebase"
+            }
+          ],
+          "permissions": {
+            "can_create_files": false,
+            "can_edit_files": false,
+            "can_delete_files": false,
+            "can_run_commands": false,
+            "can_delegate": false,
+            "can_modify_public_api": false,
+            "can_touch_global_config": false
+          },
+          "engram": {
+            "mode": "autonomous"
+          },
+          "mcpServers": [
+            {
+              "id": "engram",
+              "command": "engram",
+              "args": []
+            }
+          ],
+          "handoffs": {
+            "receives_from": [
+              "router"
+            ]
+          },
+          "output": {
+            "template": "summary",
+            "mode": "detailed",
+            "max_items": 10
+          }
+        }
+      },
+      "api-worker": {
+        "id": "api-worker",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "api-worker",
+          "name": "API Worker",
+          "version": "1.0.0",
+          "role": "worker",
+          "domain": "backend",
+          "subdomain": "api",
+          "description": "Creates and modifies API endpoints, middleware, and authentication handlers in src/api/ using TypeScript. Follows existing module patterns and ensures proper input validation and error handling.\n",
+          "expertise": [
+            "TypeScript",
+            "REST API design",
+            "middleware patterns",
+            "authentication and JWT",
+            "input validation",
+            "error handling"
+          ],
+          "intents": [
+            "create_endpoint",
+            "modify_endpoint",
+            "add_middleware",
+            "implement_authentication",
+            "add_user_route"
+          ],
+          "scope": {
+            "topics": [
+              "API endpoint implementation",
+              "middleware development",
+              "authentication handler implementation"
+            ],
+            "path_globs": [
+              {
+                "pattern": "src/api/**",
+                "priority": "high"
+              }
+            ],
+            "excludes": [
+              "dist/**",
+              "node_modules/**"
+            ]
+          },
+          "workflow": [
+            "Read existing files in src/api/ to understand module structure and conventions.",
+            "Implement the requested endpoint or middleware following existing patterns.",
+            "Ensure all inputs are validated at API boundaries.",
+            "Add proper error handling with appropriate HTTP status codes.",
+            "Write a backend:patterns entry to Engram recording key implementation decisions."
+          ],
+          "tools": [
+            {
+              "name": "search/codebase"
+            },
+            {
+              "name": "edit/editFiles"
+            }
+          ],
+          "permissions": {
+            "can_create_files": true,
+            "can_edit_files": true,
+            "can_delete_files": false,
+            "can_run_commands": false,
+            "can_delegate": false,
+            "can_modify_public_api": false,
+            "can_touch_global_config": false
+          },
+          "constraints": {
+            "always": [
+              "Validate all user input at API boundaries.",
+              "Follow the module structure and naming conventions in src/api/.",
+              "Return consistent error response shapes."
+            ],
+            "never": [
+              "Hardcode credentials, secrets, or tokens in source files.",
+              "Create files outside src/api/."
+            ]
+          },
+          "handoffs": {
+            "receives_from": [
+              "backend-orchestrator"
+            ]
+          },
+          "output": {
+            "template": "diff",
+            "mode": "detailed",
+            "max_items": 10
+          }
+        }
+      },
+      "backend-orchestrator": {
+        "id": "backend-orchestrator",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "backend-orchestrator",
+          "name": "Backend Orchestrator",
+          "version": "1.0.0",
+          "role": "orchestrator",
+          "domain": "backend",
+          "description": "Decomposes backend feature requests into API-level sub-tasks and delegates them to the api-worker. Integrates results and validates the delivered backend feature end-to-end.\n",
+          "expertise": [
+            "REST API design",
+            "TypeScript",
+            "API task decomposition",
+            "middleware planning",
+            "authentication flows"
+          ],
+          "intents": [
+            "orchestrate_api_implementation",
+            "orchestrate_backend_feature",
+            "delegate_backend_subtasks"
+          ],
+          "scope": {
+            "topics": [
+              "API endpoint development",
+              "middleware implementation",
+              "authentication and authorization",
+              "backend architecture planning"
+            ]
+          },
+          "workflow": [
+            "Recall the task context from Engram using task:{taskId}:subtask:backend (parallel) or handoff:{taskId} (single).",
+            "Analyze the request and identify all API artifacts that need to be created or modified.",
+            "Decompose into endpoint-level sub-tasks and delegate each to api-worker.",
+            "Integrate returned results and verify the backend feature is complete.",
+            "Write the final outcome to Engram as task:{taskId}:subtask:backend:result and call complete_subtask."
+          ],
+          "tools": [
+            {
+              "name": "search/codebase"
+            }
+          ],
+          "permissions": {
+            "can_delegate": true
+          },
+          "handoffs": {
+            "receives_from": [
+              "router"
+            ],
+            "delegates_to": [
+              "api-worker"
+            ]
+          },
+          "output": {
+            "template": "planning",
+            "mode": "detailed"
+          }
+        }
+      },
+      "component-worker": {
+        "id": "component-worker",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "component-worker",
+          "name": "Component Worker",
+          "version": "1.0.0",
+          "role": "worker",
+          "domain": "frontend",
+          "subdomain": "components",
+          "description": "Creates and modifies React components with TypeScript in src/ui/. Generates component files with typed props interfaces, requested variants, and corresponding Vitest + Testing Library test files.\n",
+          "expertise": [
+            "React 18",
+            "TypeScript",
+            "Vitest",
+            "Testing Library",
+            "CSS-in-JS / inline styles",
+            "component API design",
+            "variant patterns (primary/secondary)"
+          ],
+          "intents": [
+            "create_component",
+            "modify_component",
+            "add_component_variant",
+            "write_component_tests"
+          ],
+          "scope": {
+            "topics": [
+              "React component implementation",
+              "component testing",
+              "component variant design"
+            ],
+            "path_globs": [
+              {
+                "pattern": "src/ui/**",
+                "priority": "high"
+              },
+              {
+                "pattern": "src/**/*.test.tsx",
+                "priority": "medium"
+              }
+            ],
+            "excludes": [
+              "dist/**",
+              "node_modules/**"
+            ]
+          },
+          "workflow": [
+            "Read existing components in src/ui/ to understand naming and structuring conventions.",
+            "Implement the requested component with TypeScript props interface and all requested variants.",
+            "Create a co-located .test.tsx file following the Button.test.tsx / Card.test.tsx patterns.",
+            "Write a frontend:patterns entry to Engram recording the key design decisions made."
+          ],
+          "tools": [
+            {
+              "name": "search/codebase"
+            },
+            {
+              "name": "edit/editFiles"
+            }
+          ],
+          "permissions": {
+            "can_create_files": true,
+            "can_edit_files": true,
+            "can_delete_files": false,
+            "can_run_commands": false,
+            "can_delegate": false,
+            "can_modify_public_api": false,
+            "can_touch_global_config": false
+          },
+          "constraints": {
+            "always": [
+              "Follow the naming and file structure conventions already present in src/ui/.",
+              "Add a Vitest test file for every new component.",
+              "Use TypeScript interfaces for all component props.",
+              "Export components as named exports."
+            ],
+            "never": [
+              "Create files outside src/.",
+              "Use default exports for components."
+            ]
+          },
+          "handoffs": {
+            "receives_from": [
+              "frontend-orchestrator"
+            ]
+          },
+          "output": {
+            "template": "diff",
+            "mode": "detailed",
+            "max_items": 10
+          }
+        }
+      },
+      "frontend-orchestrator": {
+        "id": "frontend-orchestrator",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "frontend-orchestrator",
+          "name": "Frontend Orchestrator",
+          "version": "1.0.0",
+          "role": "orchestrator",
+          "domain": "frontend",
+          "description": "Decomposes frontend feature requests into component-level sub-tasks and delegates them to the component-worker. Integrates results and validates the delivered UI feature.\n",
+          "expertise": [
+            "React component architecture",
+            "TypeScript",
+            "Vite",
+            "UI feature decomposition",
+            "frontend task planning"
+          ],
+          "intents": [
+            "orchestrate_component_creation",
+            "orchestrate_ui_feature",
+            "delegate_frontend_subtasks"
+          ],
+          "scope": {
+            "topics": [
+              "React component development",
+              "UI feature implementation",
+              "frontend architecture planning"
+            ]
+          },
+          "workflow": [
+            "Recall the task context from Engram using handoff:{taskId} (or task:{taskId}:subtask:frontend for parallel dispatch).",
+            "Analyze the request and identify all UI artifacts that need to be created or modified.",
+            "Decompose into component-level sub-tasks and delegate each to component-worker.",
+            "Integrate returned results and verify the feature is complete end-to-end.",
+            "If dispatched in parallel, write the final outcome to Engram as task:{taskId}:subtask:frontend:result and call complete_subtask."
+          ],
+          "tools": [
+            {
+              "name": "search/codebase"
+            }
+          ],
+          "permissions": {
+            "can_delegate": true
+          },
+          "handoffs": {
+            "receives_from": [
+              "router"
+            ],
+            "delegates_to": [
+              "component-worker"
+            ]
+          },
+          "output": {
+            "template": "planning",
+            "mode": "detailed"
+          }
+        }
+      },
+      "router": {
+        "id": "router",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "router",
+          "name": "Router",
+          "version": "1.0.0",
+          "role": "router",
+          "domain": "global",
+          "description": "Receives all incoming user requests, classifies the intent, and routes to the appropriate orchestrator or worker agent. Supports single-domain handoff and multi-domain parallel dispatch via Agent Teams protocol.\n",
+          "expertise": [
+            "intent classification",
+            "request routing",
+            "single-domain handoff",
+            "multi-domain parallel dispatch",
+            "Engram handoff context writing"
+          ],
+          "intents": [
+            "component_creation",
+            "api_implementation",
+            "ui_analysis",
+            "parallel_dispatch",
+            "route_request"
+          ],
+          "workflow": [
+            "Read the user request and identify the primary intent.",
+            "Determine whether the task is single-domain (frontend only or backend only) or multi-domain (both frontend and backend).",
+            "For single-domain frontend tasks, write handoff:{taskId} to Engram and delegate to frontend-orchestrator.",
+            "For single-domain backend tasks, write handoff:{taskId} to Engram and delegate to backend-orchestrator.",
+            "For UI analysis tasks, delegate directly to ui-analyst-worker.",
+            "For multi-domain tasks, write task:{taskId}:subtask:frontend and task:{taskId}:subtask:backend to Engram and call agent-teams-dispatch-parallel.",
+            "If no agent matches the detected intent, escalate with a clear explanation."
+          ],
+          "tools": [
+            {
+              "name": "agent-teams-handoff"
+            }
+          ],
+          "handoffs": {
+            "delegates_to": [
+              "frontend-orchestrator",
+              "backend-orchestrator",
+              "ui-analyst-worker"
+            ]
+          },
+          "output": {
+            "template": "routing-decision",
+            "mode": "short"
+          }
+        }
+      },
+      "ui-analyst-worker": {
+        "id": "ui-analyst-worker",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "ui-analyst-worker",
+          "name": "UI Analyst Worker",
+          "version": "1.0.0",
+          "role": "worker",
+          "domain": "frontend",
+          "subdomain": "analysis",
+          "description": "Analyzes all React components in src/ui/ to identify which ones lack a corresponding test file. Uses Engram to persist analysis results and returns cached results instantly on repeat requests without re-scanning the filesystem.\n",
+          "expertise": [
+            "React component analysis",
+            "Vitest test coverage",
+            "filesystem traversal",
+            "Engram memory recall",
+            "test gap identification"
+          ],
+          "intents": [
+            "analyze_ui_components",
+            "find_untested_components",
+            "recall_ui_analysis"
+          ],
+          "scope": {
+            "topics": [
+              "UI component test coverage analysis",
+              "missing test detection"
+            ],
+            "path_globs": [
+              {
+                "pattern": "src/ui/**",
+                "priority": "high"
+              }
+            ],
+            "excludes": [
+              "node_modules/**",
+              "dist/**"
+            ]
+          },
+          "workflow": [
+            "At session start, call engram_recall with key ui:analysis:{date} to check for a cached result.",
+            "If a cached result exists and is recent, return it immediately without scanning the filesystem.",
+            "If no cache exists, traverse src/ui/ and collect all component files (*.tsx, excluding *.test.tsx).",
+            "For each component file, check whether a co-located .test.tsx file exists.",
+            "Compile the list of components without test coverage.",
+            "Write the analysis result to Engram with key ui:analysis:{date}.",
+            "Return the analysis result with the full list of untested components."
+          ],
+          "tools": [
+            {
+              "name": "search/codebase"
+            }
+          ],
+          "permissions": {
+            "can_create_files": false,
+            "can_edit_files": false,
+            "can_delete_files": false,
+            "can_run_commands": false,
+            "can_delegate": false,
+            "can_modify_public_api": false,
+            "can_touch_global_config": false
+          },
+          "engram": {
+            "mode": "autonomous"
+          },
+          "mcpServers": [
+            {
+              "id": "engram",
+              "command": "engram",
+              "args": []
+            }
+          ],
+          "constraints": {
+            "always": [
+              "Check Engram for a cached analysis result before scanning the filesystem.",
+              "Write every new analysis result to Engram immediately after computing it.",
+              "Include the full file path for each component in the output."
+            ],
+            "never": [
+              "Modify any source file.",
+              "Scan directories outside src/ui/."
+            ]
+          },
+          "handoffs": {
+            "receives_from": [
+              "router"
+            ]
+          },
+          "output": {
+            "template": "analysis",
+            "mode": "detailed",
+            "max_items": 20
+          }
+        }
+      }
+    },
+    "teams": {
+      "team-autonomous": {
+        "id": "team-autonomous",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "team-autonomous",
+          "name": "Team Autonomous",
+          "description": "Autonomous worker team for Demo 3 & 4. Uses ui-analyst-worker directly with Engram-backed persistent memory. Demonstrates cached recall vs. fresh filesystem scan on repeat requests.\n",
+          "agents": {
+            "enable": [
+              "router",
+              "ui-analyst-worker"
+            ]
+          }
+        }
+      },
+      "team-parallel": {
+        "id": "team-parallel",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "team-parallel",
+          "name": "Team Parallel",
+          "description": "Parallel dispatch team for Demo 2 and Demo 5 (hot-swap). Supports simultaneous frontend and backend work via dual orchestrators and an aggregator that unifies results from Engram.\n",
+          "agents": {
+            "enable": [
+              "router",
+              "frontend-orchestrator",
+              "backend-orchestrator",
+              "aggregator",
+              "component-worker",
+              "api-worker"
+            ]
+          }
+        }
+      },
+      "team-simple": {
+        "id": "team-simple",
+        "source": "import",
+        "updatedAt": "2026-03-19T00:34:47.364Z",
+        "data": {
+          "id": "team-simple",
+          "name": "Team Simple",
+          "description": "Simple single-pipeline team for Demo 1. Routes component creation requests through router → frontend-orchestrator → component-worker.",
+          "tags": [],
+          "agents": {
+            "enable": [
+              "router",
+              "frontend-orchestrator",
+              "component-worker"
+            ]
+          }
+        }
+      }
+    },
+    "skills": {}
+  }
+}
