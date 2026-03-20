@@ -1,5 +1,7 @@
 # Agent Teams — Demo Slides
 
+https://egdev6.github.io/agent-teams-demo/
+
 Presentación HTML con Reveal.js para el directo demo de Agent Teams.
 Cubre las 8 secciones del guion: desde el pipeline simple hasta el cambio de equipo en caliente.
 
